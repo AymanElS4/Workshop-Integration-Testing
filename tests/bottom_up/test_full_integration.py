@@ -30,7 +30,7 @@ from app.payment_gateway import PaymentGateway
 
 # Reutilizamos el Fake construido por el Integrante 3.
 from tests.bottom_up.test_db_driver import FakeDb
-
+from app.order_service import OrderService, PaymentRejectedError, OutOfStockError
 
 PAY_URL = "https://pagos.test/api/v1/charges"
 
@@ -67,8 +67,20 @@ def test_pedido_end_to_end_confirmado(requests_mock, integrated_service):
 #   - CLAVE de integración: el stock NO debe haber bajado y NO debe existir
 #     ningún pedido guardado (`db.orders == {}`).
 def test_pedido_rechazado_no_cambia_estado(requests_mock, integrated_service):
-    pytest.skip("TODO pendiente: completa este test (Integrante responsable).")
-
+    service, db = integrated_service
+    
+    # 1. Simula un 402 en PAY_URL
+    requests_mock.post(
+        PAY_URL, 
+        status_code=402, 
+        json={"reason": "insufficient_funds"}
+    )
+    # 2. Verifica que se lanza PaymentRejectedError
+    with pytest.raises(PaymentRejectedError):
+        service.place_order("SKU-1", 2, "tok_visa")
+    # 3. Verifica que el estado no cambió (stock intacto y sin pedidos guardados)
+    assert db.get_stock("SKU-1") == 10
+    assert db.orders == {}
 
 # TODO 2: Sin stock nunca se llega a la red.
 #   - Pide una cantidad mayor al stock disponible (p. ej. 999).
