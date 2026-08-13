@@ -76,7 +76,12 @@ def test_calculate_total_cantidad_invalida():
 #   - EXTRA: verifica que NUNCA se intentó cobrar
 #     (`gateway.charge.assert_not_called()`).
 def test_place_order_sin_stock():
-    pytest.skip("TODO pendiente: completa este test (Integrante responsable).")
+    service, db, gateway = make_service(stock=1)
+    
+    with pytest.raises(OutOfStockError):
+        service.place_order(product_id="P-001", quantity=5, card_token="tok_123")
+    
+    gateway.charge.assert_not_called()
 
 
 # TODO 3: Pago rechazado.
