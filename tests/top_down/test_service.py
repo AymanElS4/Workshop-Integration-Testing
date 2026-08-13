@@ -89,7 +89,12 @@ def test_place_order_sin_stock():
 #   - `place_order(...)` debe lanzar `PaymentRejectedError`.
 #   - EXTRA: verifica que el pedido NO se guardó (`db.save_order.assert_not_called()`).
 def test_place_order_pago_rechazado():
-    pytest.skip("TODO pendiente: completa este test (Integrante responsable).")
+    service, db, gateway = make_service(approved=False)
+    
+    with pytest.raises(PaymentRejectedError):
+        service.place_order(product_id="P-001", quantity=2, card_token="tok_123")
+    
+    db.save_order.assert_not_called()
 
 
 # TODO 4: Camino feliz completo.
@@ -98,4 +103,11 @@ def test_place_order_pago_rechazado():
 #   - Verifica que se descontó el stock:
 #     `db.update_stock` fue llamado con (product_id, stock - quantity).
 def test_place_order_confirmado_descuenta_stock():
-    pytest.skip("TODO pendiente: completa este test (Integrante responsable).")
+    service, db, gateway = make_service(stock=10, price=100.0, approved=True)
+    
+    result = service.place_order(product_id="P-001", quantity=2, card_token="tok_123")
+    
+    assert result["status"] == "CONFIRMED"
+    assert result["total"] == 232.0  # 100 * 2 + 16% IVA
+    
+    db.update_stock.assert_called_once_with("P-001", 8)
