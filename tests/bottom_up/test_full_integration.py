@@ -30,6 +30,7 @@ from app.payment_gateway import PaymentGateway
 
 # Reutilizamos el Fake construido por el Integrante 3.
 from tests.bottom_up.test_db_driver import FakeDb
+
 from app.order_service import OrderService, PaymentRejectedError, OutOfStockError
 
 PAY_URL = "https://pagos.test/api/v1/charges"
@@ -87,8 +88,14 @@ def test_pedido_rechazado_no_cambia_estado(requests_mock, integrated_service):
 #   - Verifica que se lanza `OutOfStockError` y que NO se registró ninguna
 #     petición HTTP (`requests_mock.call_count == 0`).
 def test_pedido_sin_stock_no_llama_pasarela(requests_mock, integrated_service):
-    pytest.skip("TODO pendiente: completa este test (Integrante responsable).")
+    service, db = integrated_service
+    
+    # 1. Verifica que se lanza OutOfStockError al pedir más del stock (10)
+    with pytest.raises(OutOfStockError):
+        service.place_order("SKU-1", 999, "tok_visa")
 
+    # 2. Verifica que NO se registró ninguna petición HTTP
+    assert requests_mock.call_count == 0
 
 # TODO 3: Dos pedidos consecutivos descuentan stock de forma acumulada.
 #   - Simula 200 OK. Haz dos pedidos de 3 unidades cada uno.
