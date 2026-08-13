@@ -101,4 +101,19 @@ def test_pedido_sin_stock_no_llama_pasarela(requests_mock, integrated_service):
 #   - Simula 200 OK. Haz dos pedidos de 3 unidades cada uno.
 #   - Verifica que el stock final es 10 - 3 - 3 = 4 y que hay 2 pedidos guardados.
 def test_dos_pedidos_descuentan_stock_acumulado(requests_mock, integrated_service):
-    pytest.skip("TODO pendiente: completa este test (Integrante responsable).")
+    service, db = integrated_service
+    
+    # 1. Simula 200 OK para la pasarela de pagos
+    requests_mock.post(
+        PAY_URL, 
+        status_code=200, 
+        json={"transaction_id": "tx_200_ok"}
+    )
+
+    # 2. Haz dos pedidos de 3 unidades cada uno
+    service.place_order("SKU-1", 3, "tok_visa")
+    service.place_order("SKU-1", 3, "tok_visa")
+
+    # 3. Verifica el stock final y la cantidad de pedidos guardados
+    assert db.get_stock("SKU-1") == 4
+    assert len(db.orders) == 2
