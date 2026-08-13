@@ -68,8 +68,14 @@ def test_run_order_pago_rechazado(mocker):
 #   - `side_effect = ConnectionError("boom")` (o cualquier Exception genérica).
 #   - Verifica que el mensaje EMPIECE por "ERROR: inesperado".
 def test_run_order_error_inesperado(mocker):
-    
-    pytest.skip("TODO pendiente: completa este test (Integrante responsable).")
+    """Verifica que la CLI maneje correctamente errores no controlados/inesperados."""
+    service = mocker.MagicMock()
+    service.place_order.side_effect = ConnectionError("boom")
+
+    mensaje = run_order(service, "SKU-1", 1, "tok_visa")
+
+    assert mensaje.startswith("ERROR: inesperado")
+    service.place_order.assert_called_once_with("SKU-1", 1, "tok_visa")
 
 
 # TODO 4 (OPCIONAL, avanzado — NO cuenta para la nota): prueba `app.cli.main([...])`
